@@ -93,7 +93,7 @@ struct TaskScreen: View {
                     }
                 
                 VStack(spacing: 20) {
-                    Text("Place Your Bid")
+                    Text(task.title)
                         .font(.title2)
                         .bold()
                         .foregroundColor(.white)
@@ -101,15 +101,13 @@ struct TaskScreen: View {
                     Divider().background(Color.white.opacity(0.5))
                     
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Task: \(task.title)")
-                            .foregroundColor(.white.opacity(0.8))
                         
                         Text("Current Buy Price: \(task.price)")
                             .foregroundColor(.green)
                             .bold()
                         
                         Text("Your Balance: $\(String(format: "%.2f", userBalance))")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.white)
                             .font(.caption)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -169,6 +167,9 @@ struct TaskScreen: View {
             }
         }
         .onAppear(perform: loadTasks)
+        .padding()
+        
+        
     }
     
     // MARK: - Logic Functions
@@ -180,9 +181,9 @@ struct TaskScreen: View {
     }
     
     func closePopup() {
-        withAnimation {
-            selectedTask = nil
-        }
+        withAnimation(.easeInOut(duration: 0.1)) {
+                selectedTask = nil
+            }
     }
     
     func placeBid() {
