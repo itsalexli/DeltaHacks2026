@@ -1,13 +1,7 @@
-//
-//  TaskScreen.swift
-//  DeltaHacks2026
-//
-//  Created by Alexander Li on 2026-01-10.
-//
-
 import SwiftUI
+import Combine
 
-// Data Model
+// MARK: - Data Model
 struct TaskItem: Identifiable, Codable {
     var id = UUID()
     var title: String
@@ -21,7 +15,7 @@ struct TaskScreen: View {
     
     // Data State
     @State private var tasks: [TaskItem] = []
-    @State private var userBalance: Double = 1250.00 // Example User Balance
+    @State private var userBalance: Double = 1250.00 // Default User Balance
     
     // Bidding Popup State
     @State private var selectedTask: TaskItem? = nil
@@ -53,8 +47,8 @@ struct TaskScreen: View {
                     
                     Spacer()
                     
-                    // Balance Display in Header
-                    Text(String(format: "$%.0f", userBalance))
+                    // Balance Display - Rounded to 2 decimal places
+                    Text(String(format: "$%.2f", userBalance))
                         .font(.subheadline)
                         .bold()
                         .foregroundColor(.green)
@@ -71,7 +65,6 @@ struct TaskScreen: View {
                         ForEach(tasks) { task in
                             TaskRow(task: task)
                                 .onTapGesture {
-                                    // Open the bidding popup for this task
                                     openBidPopup(for: task)
                                 }
                         }
@@ -81,8 +74,8 @@ struct TaskScreen: View {
                 
                 Spacer()
             }
-            .blur(radius: selectedTask != nil ? 5 : 0) // Blur background when popup is open
-            .disabled(selectedTask != nil) // Disable interaction with background
+            .blur(radius: selectedTask != nil ? 5 : 0)
+            .disabled(selectedTask != nil)
             
             // MARK: - Bidding Popup
             if let task = selectedTask {
@@ -101,20 +94,34 @@ struct TaskScreen: View {
                     Divider().background(Color.white.opacity(0.5))
                     
                     VStack(alignment: .leading, spacing: 10) {
-                        
                         Text("Current Buy Price: \(task.price)")
                             .foregroundColor(.green)
                             .bold()
                         
-                        Text("Your Balance: $\(String(format: "%.2f", userBalance))")
+                        Text("Your Balance: \(String(format: "$%.2f", userBalance))")
                             .foregroundColor(.white)
                             .font(.caption)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    // Input Field
-                    TextField("Enter bid amount", text: $bidInput)
+                    // Input Field - Restricted to 2 decimal places
+                    TextField("0.00", text: $bidInput)
                         .keyboardType(.decimalPad)
+                        .onChange(of: bidInput) { newValue in
+                            let filtered = newValue.filter { "0123456789.".contains($0) }
+                            if filtered.contains(".") {
+                                let components = filtered.components(separatedBy: ".")
+                                if components.count > 2 {
+                                    bidInput = String(filtered.prefix(filtered.count - 1))
+                                } else if components[1].count > 2 {
+                                    bidInput = components[0] + "." + components[1].prefix(2)
+                                } else {
+                                    bidInput = filtered
+                                }
+                            } else {
+                                bidInput = filtered
+                            }
+                        }
                         .padding()
                         .background(Color.white.opacity(0.1))
                         .cornerRadius(10)
@@ -131,7 +138,6 @@ struct TaskScreen: View {
                     }
                     
                     HStack(spacing: 15) {
-                        // Close Button
                         Button(action: closePopup) {
                             Text("Close")
                                 .foregroundColor(.white)
@@ -141,7 +147,6 @@ struct TaskScreen: View {
                                 .cornerRadius(10)
                         }
                         
-                        // Bid Button
                         Button(action: placeBid) {
                             Text("Bid")
                                 .bold()
@@ -168,8 +173,6 @@ struct TaskScreen: View {
         }
         .onAppear(perform: loadTasks)
         .padding()
-        
-        
     }
     
     // MARK: - Logic Functions
@@ -182,8 +185,8 @@ struct TaskScreen: View {
     
     func closePopup() {
         withAnimation(.easeInOut(duration: 0.1)) {
-                selectedTask = nil
-            }
+            selectedTask = nil
+        }
     }
     
     func placeBid() {
@@ -193,7 +196,7 @@ struct TaskScreen: View {
             return
         }
         
-        // Logic: Bid must be LESS than current buy amount
+        // Logic: Bid must be LESS than current price. Balance is NOT affected.
         if bidValue < currentPrice {
             updateTaskPrice(taskID: task.id, newPrice: bidValue)
             closePopup()
@@ -203,12 +206,11 @@ struct TaskScreen: View {
     }
     
     func updateTaskPrice(taskID: UUID, newPrice: Double) {
-        // 1. Update local list
         if let index = tasks.firstIndex(where: { $0.id == taskID }) {
-            tasks[index].price = "$" + String(format: "%.0f", newPrice)
+            // Updated to ensure 2 decimal places
+            tasks[index].price = "$" + String(format: "%.2f", newPrice)
         }
         
-        // 2. Update UserDefaults
         if let encoded = try? JSONEncoder().encode(tasks) {
             UserDefaults.standard.set(encoded, forKey: "savedTasks")
         }
@@ -220,17 +222,18 @@ struct TaskScreen: View {
             tasks = decoded
         }
         
+        // Fallback to 3 default items if UserDefaults is empty
         if tasks.isEmpty {
             tasks = [
-                TaskItem(title: "Fix broken window", price: "$120", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 2)),
-                TaskItem(title: "Mow the lawn", price: "$45", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400)),
-                TaskItem(title: "Assemble IKEA Desk", price: "$60", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 5))
+                TaskItem(title: "Fix broken window", price: "$120.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 2)),
+                TaskItem(title: "Mow the lawn", price: "$45.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400)),
+                TaskItem(title: "Assemble IKEA Desk", price: "$60.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 5))
             ]
         }
     }
 }
 
-// MARK: - Row View
+// MARK: - Row View Component
 struct TaskRow: View {
     let task: TaskItem
     
@@ -282,7 +285,6 @@ struct TaskRow: View {
                         .stroke(.white.opacity(0.1), lineWidth: 1)
                 )
         )
-        // Add shape for better tap area
         .contentShape(Rectangle())
     }
 }
