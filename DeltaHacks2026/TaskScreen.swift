@@ -2,6 +2,7 @@ import SwiftUI
 import Combine
 
 // MARK: - Data Model
+// Note: If you have this defined in a separate shared file, remove it from here.
 struct TaskItem: Identifiable, Codable {
     var id = UUID()
     var title: String
@@ -67,7 +68,6 @@ struct TaskScreen: View {
             .disabled(selectedTask != nil)
             
             // MARK: - Floating Add Button
-            // Only show if no task is selected (popup is closed)
             if selectedTask == nil {
                 VStack {
                     Spacer()
@@ -107,15 +107,7 @@ struct TaskScreen: View {
                     TextField("0.00", text: $bidInput)
                         .keyboardType(.decimalPad)
                         .onChange(of: bidInput) { newValue in
-                            let filtered = newValue.filter { "0123456789.".contains($0) }
-                            if filtered.contains(".") {
-                                let parts = filtered.components(separatedBy: ".")
-                                if parts.count > 2 {
-                                    bidInput = String(filtered.prefix(filtered.count - 1))
-                                } else if parts[1].count > 2 {
-                                    bidInput = parts[0] + "." + parts[1].prefix(2)
-                                } else { bidInput = filtered }
-                            } else { bidInput = filtered }
+                            filterDecimalInput(newValue: newValue, binding: $bidInput)
                         }
                         .padding().background(Color.white.opacity(0.1)).cornerRadius(10).foregroundColor(.white)
                     
@@ -143,6 +135,19 @@ struct TaskScreen: View {
         .sheet(isPresented: $showAddTaskSheet) {
             AddTaskView(tasks: $tasks)
         }
+    }
+    
+    // Helper for decimal filtering
+    func filterDecimalInput(newValue: String, binding: Binding<String>) {
+        let filtered = newValue.filter { "0123456789.".contains($0) }
+        if filtered.contains(".") {
+            let parts = filtered.components(separatedBy: ".")
+            if parts.count > 2 {
+                binding.wrappedValue = String(filtered.prefix(filtered.count - 1))
+            } else if parts[1].count > 2 {
+                binding.wrappedValue = parts[0] + "." + parts[1].prefix(2)
+            } else { binding.wrappedValue = filtered }
+        } else { binding.wrappedValue = filtered }
     }
     
     // MARK: - Logic Functions
@@ -243,6 +248,7 @@ struct TaskRow: View {
     }
 }
 
+// MARK: - Custom Styled Add Task View
 struct AddTaskView: View {
     @Environment(\.dismiss) var dismiss
     @Binding var tasks: [TaskItem]
@@ -252,32 +258,108 @@ struct AddTaskView: View {
     @State private var dueDate = Date().addingTimeInterval(86400) // Default tomorrow
     
     var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("Task Details")) {
-                    TextField("Task Title", text: $title)
+        ZStack {
+            // Background
+            Color.black.ignoresSafeArea()
+            
+            VStack(spacing: 25) {
+                // Header
+                Text("Add New Task")
+                    .font(.title2)
+                    .bold()
+                    .foregroundColor(.white)
+                    .padding(.top, 20)
+                
+                Divider().background(Color.white.opacity(0.3))
+                
+                // Inputs
+                VStack(alignment: .leading, spacing: 15) {
                     
-                    TextField("Price (e.g. 50.00)", text: $price)
-                        .keyboardType(.decimalPad)
+                    // Task Title Input
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Task Title").font(.caption).foregroundColor(.gray)
+                        TextField("e.g. Clean Garage", text: $title)
+                            .padding()
+                            .background(RoundedRectangle(cornerRadius: 12).fill(.ultraThinMaterial))
+                            .foregroundColor(.white)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.1), lineWidth: 1))
+                    }
                     
-                    DatePicker("Due Date", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
+                    // Price Input
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Price").font(.caption).foregroundColor(.gray)
+                        TextField("0.00", text: $price)
+                            .keyboardType(.decimalPad)
+                            .onChange(of: price) { newValue in
+                                filterDecimalInput(newValue: newValue)
+                            }
+                            .padding()
+                            .background(RoundedRectangle(cornerRadius: 12).fill(.ultraThinMaterial))
+                            .foregroundColor(.white)
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.1), lineWidth: 1))
+                    }
+                    
+                    // Date Input
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("Due Date").font(.caption).foregroundColor(.gray)
+                        DatePicker("", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+                            .colorScheme(.dark) // Forces dark mode picker
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(.ultraThinMaterial))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(.white.opacity(0.1), lineWidth: 1))
+                    }
                 }
-            }
-            .navigationTitle("Add New Task")
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                .padding(.horizontal)
+                
+                Spacer()
+                
+                // Buttons
+                HStack(spacing: 15) {
+                    Button(action: { dismiss() }) {
+                        Text("Cancel")
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.gray.opacity(0.3))
+                            .cornerRadius(12)
+                    }
+                    
+                    Button(action: { saveTask() }) {
+                        Text("Save Task")
+                            .bold()
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(title.isEmpty || price.isEmpty ? Color.green.opacity(0.3) : Color.green)
+                            .cornerRadius(12)
+                    }
+                    .disabled(title.isEmpty || price.isEmpty)
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { saveTask() }
-                        .disabled(title.isEmpty || price.isEmpty)
-                }
+                .padding(.horizontal)
+                .padding(.bottom, 20)
             }
         }
+        .presentationDetents([.fraction(0.65)]) // Makes the sheet height fit content better
+        .presentationDragIndicator(.visible)
+    }
+    
+    // Logic: Restrict to Numbers and 2 Decimal Places
+    func filterDecimalInput(newValue: String) {
+        let filtered = newValue.filter { "0123456789.".contains($0) }
+        if filtered.contains(".") {
+            let parts = filtered.components(separatedBy: ".")
+            if parts.count > 2 {
+                price = String(filtered.prefix(filtered.count - 1))
+            } else if parts[1].count > 2 {
+                price = parts[0] + "." + parts[1].prefix(2)
+            } else { price = filtered }
+        } else { price = filtered }
     }
     
     func saveTask() {
-        // Simple validation to ensure currency format
         var finalPrice = price.trimmingCharacters(in: .whitespacesAndNewlines)
         if !finalPrice.hasPrefix("$") {
             finalPrice = "$\(finalPrice)"
@@ -286,7 +368,6 @@ struct AddTaskView: View {
         let newTask = TaskItem(title: title, price: finalPrice, biddingDate: Date(), dueDate: dueDate)
         tasks.append(newTask)
         
-        // Save to UserDefaults
         if let encoded = try? JSONEncoder().encode(tasks) {
             UserDefaults.standard.set(encoded, forKey: "savedTasks")
         }
