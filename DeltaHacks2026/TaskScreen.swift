@@ -11,43 +11,27 @@ struct TaskItem: Identifiable, Codable {
 }
 
 struct TaskScreen: View {
+    // This binding fixes the "Argument passed to call that takes no arguments" error
     @Binding var showTaskScreen: Bool
     
-    // Data State
     @State private var tasks: [TaskItem] = []
-    @State private var userBalance: Double = 1250.00 // Default User Balance
-    
-    // Bidding Popup State
+    @State private var userBalance: Double = 1250.00
     @State private var selectedTask: TaskItem? = nil
     @State private var bidInput: String = ""
     @State private var showBidError: Bool = false
     
     var body: some View {
         ZStack {
-            // MARK: - Main Content
             VStack {
-                // Header
+                // Header: Home button removed per request
                 HStack {
-                    Button(action: {
-                        showTaskScreen = false
-                    }) {
-                        Image(systemName: "house.fill")
-                            .foregroundColor(.white)
-                            .font(.system(size: 20))
-                            .padding()
-                            .background(Color.white.opacity(0.1))
-                            .clipShape(Circle())
-                    }
-                    
                     Spacer()
-                    
                     Text("Available Tasks")
                         .font(.headline)
                         .foregroundColor(.white)
-                    
                     Spacer()
                     
-                    // Balance Display - Rounded to 2 decimal places
+                    // Balance: Formatted to 2 decimal places
                     Text(String(format: "$%.2f", userBalance))
                         .font(.subheadline)
                         .bold()
@@ -59,19 +43,15 @@ struct TaskScreen: View {
                 .padding(.horizontal)
                 .padding(.top, 10)
                 
-                // Task List
                 ScrollView {
                     VStack(spacing: 15) {
                         ForEach(tasks) { task in
                             TaskRow(task: task)
-                                .onTapGesture {
-                                    openBidPopup(for: task)
-                                }
+                                .onTapGesture { openBidPopup(for: task) }
                         }
                     }
                     .padding()
                 }
-                
                 Spacer()
             }
             .blur(radius: selectedTask != nil ? 5 : 0)
@@ -81,101 +61,55 @@ struct TaskScreen: View {
             if let task = selectedTask {
                 Color.black.opacity(0.4)
                     .ignoresSafeArea()
-                    .onTapGesture {
-                        closePopup()
-                    }
+                    .onTapGesture { closePopup() }
                 
                 VStack(spacing: 20) {
-                    Text(task.title)
-                        .font(.title2)
-                        .bold()
-                        .foregroundColor(.white)
-                    
+                    Text(task.title).font(.title2).bold().foregroundColor(.white)
                     Divider().background(Color.white.opacity(0.5))
                     
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Current Buy Price: \(task.price)")
-                            .foregroundColor(.green)
-                            .bold()
-                        
+                        Text("Current Buy Price: \(task.price)").foregroundColor(.green).bold()
                         Text("Your Balance: \(String(format: "$%.2f", userBalance))")
-                            .foregroundColor(.white)
-                            .font(.caption)
+                            .foregroundColor(.white).font(.caption)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     
-                    // Input Field - Restricted to 2 decimal places
                     TextField("0.00", text: $bidInput)
                         .keyboardType(.decimalPad)
                         .onChange(of: bidInput) { newValue in
+                            // Restrict to numbers and 2 decimal places
                             let filtered = newValue.filter { "0123456789.".contains($0) }
                             if filtered.contains(".") {
-                                let components = filtered.components(separatedBy: ".")
-                                if components.count > 2 {
+                                let parts = filtered.components(separatedBy: ".")
+                                if parts.count > 2 {
                                     bidInput = String(filtered.prefix(filtered.count - 1))
-                                } else if components[1].count > 2 {
-                                    bidInput = components[0] + "." + components[1].prefix(2)
-                                } else {
-                                    bidInput = filtered
-                                }
-                            } else {
-                                bidInput = filtered
-                            }
+                                } else if parts[1].count > 2 {
+                                    bidInput = parts[0] + "." + parts[1].prefix(2)
+                                } else { bidInput = filtered }
+                            } else { bidInput = filtered }
                         }
-                        .padding()
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(10)
-                        .foregroundColor(.white)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(showBidError ? Color.red : Color.clear, lineWidth: 1)
-                        )
+                        .padding().background(Color.white.opacity(0.1)).cornerRadius(10).foregroundColor(.white)
                     
                     if showBidError {
-                        Text("Bid must be lower than current price.")
-                            .foregroundColor(.red)
-                            .font(.caption)
+                        Text("Bid must be lower than current price.").foregroundColor(.red).font(.caption)
                     }
                     
                     HStack(spacing: 15) {
-                        Button(action: closePopup) {
-                            Text("Close")
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.gray.opacity(0.3))
-                                .cornerRadius(10)
-                        }
+                        Button("Close") { closePopup() }
+                            .foregroundColor(.white).padding().frame(maxWidth: .infinity)
+                            .background(Color.gray.opacity(0.3)).cornerRadius(10)
                         
-                        Button(action: placeBid) {
-                            Text("Bid")
-                                .bold()
-                                .foregroundColor(.white)
-                                .padding()
-                                .frame(maxWidth: .infinity)
-                                .background(Color.green)
-                                .cornerRadius(10)
-                        }
+                        Button("Bid") { placeBid() }
+                            .bold().foregroundColor(.white).padding().frame(maxWidth: .infinity)
+                            .background(Color.green).cornerRadius(10)
                     }
                 }
-                .padding(25)
-                .background(
-                    RoundedRectangle(cornerRadius: 25)
-                        .fill(.ultraThinMaterial)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 25)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                )
-                .padding(.horizontal, 30)
-                .transition(.scale)
+                .padding(25).background(RoundedRectangle(cornerRadius: 25).fill(.ultraThinMaterial)).padding(.horizontal, 30)
             }
         }
         .onAppear(perform: loadTasks)
         .padding()
     }
-    
-    // MARK: - Logic Functions
     
     func openBidPopup(for task: TaskItem) {
         selectedTask = task
@@ -183,34 +117,23 @@ struct TaskScreen: View {
         showBidError = false
     }
     
-    func closePopup() {
-        withAnimation(.easeInOut(duration: 0.1)) {
-            selectedTask = nil
-        }
-    }
+    func closePopup() { withAnimation(.easeInOut(duration: 0.1)) { selectedTask = nil } }
     
     func placeBid() {
-        guard let task = selectedTask,
-              let bidValue = Double(bidInput),
-              let currentPrice = Double(task.price.replacingOccurrences(of: "$", with: "")) else {
-            return
-        }
+        guard let task = selectedTask, let bidValue = Double(bidInput),
+              let currentPrice = Double(task.price.replacingOccurrences(of: "$", with: "")) else { return }
         
-        // Logic: Bid must be LESS than current price. Balance is NOT affected.
         if bidValue < currentPrice {
+            // Note: userBalance remains unchanged per request
             updateTaskPrice(taskID: task.id, newPrice: bidValue)
             closePopup()
-        } else {
-            showBidError = true
-        }
+        } else { showBidError = true }
     }
     
     func updateTaskPrice(taskID: UUID, newPrice: Double) {
         if let index = tasks.firstIndex(where: { $0.id == taskID }) {
-            // Updated to ensure 2 decimal places
             tasks[index].price = "$" + String(format: "%.2f", newPrice)
         }
-        
         if let encoded = try? JSONEncoder().encode(tasks) {
             UserDefaults.standard.set(encoded, forKey: "savedTasks")
         }
@@ -220,10 +143,7 @@ struct TaskScreen: View {
         if let data = UserDefaults.standard.data(forKey: "savedTasks"),
            let decoded = try? JSONDecoder().decode([TaskItem].self, from: data) {
             tasks = decoded
-        }
-        
-        // Fallback to 3 default items if UserDefaults is empty
-        if tasks.isEmpty {
+        } else {
             tasks = [
                 TaskItem(title: "Fix broken window", price: "$120.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 2)),
                 TaskItem(title: "Mow the lawn", price: "$45.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400)),
@@ -233,68 +153,33 @@ struct TaskScreen: View {
     }
 }
 
-// MARK: - Row View Component
 struct TaskRow: View {
     let task: TaskItem
-    
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
-                Text(task.title)
-                    .font(.title3)
-                    .bold()
-                    .foregroundColor(.white)
-                
+                Text(task.title).font(.title3).bold().foregroundColor(.white)
                 HStack(spacing: 20) {
                     VStack(alignment: .leading) {
-                        Text("Bid by")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text(task.biddingDate, style: .date)
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.9))
+                        Text("Bid by").font(.caption).foregroundColor(.gray)
+                        Text(task.biddingDate, style: .date).font(.subheadline).foregroundColor(.white.opacity(0.9))
                     }
-                    
                     VStack(alignment: .leading) {
-                        Text("Due")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                        Text(task.dueDate, style: .date)
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.9))
+                        Text("Due").font(.caption).foregroundColor(.gray)
+                        Text(task.dueDate, style: .date).font(.subheadline).foregroundColor(.white.opacity(0.9))
                     }
                 }
             }
-            
             Spacer()
-            
-            Text(task.price)
-                .font(.headline)
-                .padding(.horizontal, 15)
-                .padding(.vertical, 10)
-                .background(Color.green.opacity(0.8))
-                .foregroundColor(.white)
-                .cornerRadius(10)
+            Text(task.price).font(.headline).padding(.horizontal, 15).padding(.vertical, 10)
+                .background(Color.green.opacity(0.8)).foregroundColor(.white).cornerRadius(10)
         }
         .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(.white.opacity(0.1), lineWidth: 1)
-                )
-        )
+        .background(RoundedRectangle(cornerRadius: 20).fill(.ultraThinMaterial).overlay(RoundedRectangle(cornerRadius: 20).stroke(.white.opacity(0.1), lineWidth: 1)))
         .contentShape(Rectangle())
     }
 }
 
 #Preview {
-    ZStack {
-        Image("appbackground")
-            .resizable()
-            .scaledToFill()
-            .ignoresSafeArea()
-        TaskScreen(showTaskScreen: .constant(true))
-    }
+    TaskScreen(showTaskScreen: .constant(true))
 }
