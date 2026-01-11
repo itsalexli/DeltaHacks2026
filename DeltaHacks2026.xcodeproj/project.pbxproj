@@ -51,12 +51,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3E3C98412F136F1300508596 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		5A373BA52F12EBD800FFBF2F = {
 			isa = PBXGroup;
 			children = (
 				5A4A07532F134EC600FE5A5C /* SolanaService.swift */,
 				5A4A07512F1338B900FE5A5C /* MyTasksView.swift */,
 				5A373BB02F12EBD800FFBF2F /* DeltaHacks2026 */,
+				3E3C98412F136F1300508596 /* Frameworks */,
 				5A373BAF2F12EBD800FFBF2F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -103,7 +111,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					5A373BAD2F12EBD800FFBF2F = {
 						CreatedOnToolsVersion = 16.2;
@@ -213,6 +221,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -269,6 +278,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
