@@ -2,12 +2,35 @@ import SwiftUI
 import Combine
 
 // MARK: - Data Model
+
 struct TaskItem: Identifiable, Codable {
     var id = UUID()
     var title: String
     var price: String
     var biddingDate: Date
     var dueDate: Date
+    var isUserLastBidder: Bool = false
+    
+    // Custom decoding to handle legacy data without 'isUserLastBidder'
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        price = try container.decode(String.self, forKey: .price)
+        biddingDate = try container.decode(Date.self, forKey: .biddingDate)
+        dueDate = try container.decode(Date.self, forKey: .dueDate)
+        isUserLastBidder = try container.decodeIfPresent(Bool.self, forKey: .isUserLastBidder) ?? false
+    }
+    
+    // Memberwise init needed since we added custom init
+    init(id: UUID = UUID(), title: String, price: String, biddingDate: Date, dueDate: Date, isUserLastBidder: Bool = false) {
+        self.id = id
+        self.title = title
+        self.price = price
+        self.biddingDate = biddingDate
+        self.dueDate = dueDate
+        self.isUserLastBidder = isUserLastBidder
+    }
 }
 
 struct TaskScreen: View {
@@ -204,7 +227,10 @@ struct TaskScreen: View {
             loadTasks()
             loadUserBalance()
         })
-        .onReceive(timer) { input in timeNow = input }
+        .onReceive(timer) { input in
+            timeNow = input
+            checkExpirations() // Check for expired tasks every second
+        }
         .padding(0)
         .sheet(isPresented: $showAddTaskSheet) {
             AddTaskView(tasks: $tasks)
@@ -237,14 +263,10 @@ struct TaskScreen: View {
               let currentPrice = Double(task.price.replacingOccurrences(of: "$", with: "")) else { return }
         
         if bidValue < currentPrice {
-            // Note: We deliberately do NOT decrease userBalance here.
-            // Bidding only updates the task price offer.
-            updateTaskPrice(taskID: task.id, newPrice: bidValue)
+            // Update Price and set user as last bidder
+            updateTask(taskID: task.id, newPrice: bidValue, isLastBidder: true)
             
             // Blockchain Call
-            // Converting price to Lamports (approx 1 SOL = $100 for demo math, or just direct)
-            // For demo: treating bidValue as direct SOL amount if input is small, or mapped.
-            // Let's assume input is SOL for the blockchain call.
             let lamports = UInt64(bidValue * 1_000_000_000)
             solanaService.placeBid(lamports: lamports, taskId: 101, teamId: 1) // Hardcoded IDs for demo
             
@@ -252,12 +274,61 @@ struct TaskScreen: View {
         } else { withAnimation { showBidError = true } }
     }
     
-    func updateTaskPrice(taskID: UUID, newPrice: Double) {
+    func updateTask(taskID: UUID, newPrice: Double, isLastBidder: Bool) {
         if let index = tasks.firstIndex(where: { $0.id == taskID }) {
             tasks[index].price = "$" + String(format: "%.2f", newPrice)
+            tasks[index].isUserLastBidder = isLastBidder
         }
         if let encoded = try? JSONEncoder().encode(tasks) {
             UserDefaults.standard.set(encoded, forKey: "savedTasks")
+        }
+    }
+    
+    func checkExpirations() {
+        // Filter expired tasks
+        let now = Date()
+        let expiredIndices = tasks.indices.filter { tasks[$0].dueDate < now }
+        
+        if expiredIndices.isEmpty { return }
+        
+        // Load MyTasks
+        var myTasks: [TaskItem] = []
+        if let data = UserDefaults.standard.data(forKey: "myTasks"),
+           let decoded = try? JSONDecoder().decode([TaskItem].self, from: data) {
+            myTasks = decoded
+        }
+        
+        var indicesToRemove: [Int] = []
+        
+        for index in expiredIndices {
+            let task = tasks[index]
+            if task.isUserLastBidder {
+                // User won this task!
+                // Add to My Tasks if not already there
+                if !myTasks.contains(where: { $0.id == task.id }) {
+                    myTasks.append(task)
+                }
+            }
+            // Whether won or lost, it leaves the marketplace
+            indicesToRemove.append(index)
+        }
+        
+        // Remove from marketplace (reverse order)
+        for index in indicesToRemove.sorted(by: >) {
+            tasks.remove(at: index)
+        }
+        
+        // Save Updates
+        if !indicesToRemove.isEmpty {
+            // Save Marketplace
+            if let encoded = try? JSONEncoder().encode(tasks) {
+                UserDefaults.standard.set(encoded, forKey: "savedTasks")
+            }
+            
+            // Save MyTasks
+            if let encoded = try? JSONEncoder().encode(myTasks) {
+                UserDefaults.standard.set(encoded, forKey: "myTasks")
+            }
         }
     }
     
@@ -266,11 +337,16 @@ struct TaskScreen: View {
            let decoded = try? JSONDecoder().decode([TaskItem].self, from: data) {
             tasks = decoded
         } else {
+            // NOTE: Fallback defaults if decode fails or empty
             tasks = [
                 TaskItem(title: "Fix broken window", price: "$120.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 2 + 3600)),
                 TaskItem(title: "Mow the lawn", price: "$45.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 1 + 1800)),
                 TaskItem(title: "Assemble IKEA Desk", price: "$60.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 5 + 7200))
             ]
+            // Save defaults immediately so ContentView can see them
+            if let encoded = try? JSONEncoder().encode(tasks) {
+                UserDefaults.standard.set(encoded, forKey: "savedTasks")
+            }
         }
     }
     
@@ -298,13 +374,36 @@ struct TaskRow: View {
                         .foregroundColor(.white)
                         .lineLimit(2)
                     
-                    Text("Bid Open")
-                        .font(.system(size: 12, weight: .medium, design: .rounded))
-                        .foregroundColor(.green.opacity(0.8))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.green.opacity(0.15))
-                        .cornerRadius(6)
+                    HStack(spacing: 6) {
+                        if currentTime > task.dueDate {
+                            Text(task.isUserLastBidder ? "Won" : "Closed")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(task.isUserLastBidder ? .green.opacity(0.8) : .gray)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(task.isUserLastBidder ? Color.green.opacity(0.15) : Color.gray.opacity(0.2))
+                                .cornerRadius(6)
+                        } else {
+                            Text("Bid Open")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(.green.opacity(0.8))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.green.opacity(0.15))
+                                .cornerRadius(6)
+                        }
+                        
+                        if task.isUserLastBidder {
+                            Text("Highest Bidder")
+                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                .foregroundColor(.yellow)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 4)
+                                .background(Color.yellow.opacity(0.2))
+                                .cornerRadius(6)
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color.yellow.opacity(0.5), lineWidth: 1))
+                        }
+                    }
                 }
                 
                 Spacer()
