@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3E3C982F2F13611D00508596 /* SolanaSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 3E3C982E2F13611D00508596 /* SolanaSwift */; };
+		5A02A6542F13C51F00BCD29A /* Algorithms in Frameworks */ = {isa = PBXBuildFile; productRef = 5A02A6532F13C51F00BCD29A /* Algorithms */; };
 		5A4A07522F1338B900FE5A5C /* MyTasksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A4A07512F1338B900FE5A5C /* MyTasksView.swift */; };
 		5A4A07542F134EC600FE5A5C /* SolanaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A4A07532F134EC600FE5A5C /* SolanaService.swift */; };
 /* End PBXBuildFile section */
@@ -44,6 +45,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5A02A6542F13C51F00BCD29A /* Algorithms in Frameworks */,
 				3E3C982F2F13611D00508596 /* SolanaSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -98,6 +100,7 @@
 			name = DeltaHacks2026;
 			packageProductDependencies = (
 				3E3C982E2F13611D00508596 /* SolanaSwift */,
+				5A02A6532F13C51F00BCD29A /* Algorithms */,
 			);
 			productName = DeltaHacks2026;
 			productReference = 5A373BAE2F12EBD800FFBF2F /* DeltaHacks2026.app */;
@@ -129,6 +132,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				3E3C982D2F13611D00508596 /* XCRemoteSwiftPackageReference "solana-swift" */,
+				5A02A6522F13C51F00BCD29A /* XCRemoteSwiftPackageReference "swift-algorithms" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5A373BAF2F12EBD800FFBF2F /* Products */;
@@ -293,7 +297,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"DeltaHacks2026/Preview Content\"";
-				DEVELOPMENT_TEAM = W8MV8VA7CY;
+				DEVELOPMENT_TEAM = RB9N5Q776F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DeltaHacks2026/Info.plist;
@@ -308,7 +312,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = DeltaHacks20267;
+				PRODUCT_BUNDLE_IDENTIFIER = DeltaHacks2026;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -326,7 +330,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"DeltaHacks2026/Preview Content\"";
-				DEVELOPMENT_TEAM = W8MV8VA7CY;
+				DEVELOPMENT_TEAM = RB9N5Q776F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DeltaHacks2026/Info.plist;
@@ -341,7 +345,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = DeltaHacks20267;
+				PRODUCT_BUNDLE_IDENTIFIER = DeltaHacks2026;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -382,6 +386,14 @@
 				minimumVersion = 5.0.0;
 			};
 		};
+		5A02A6522F13C51F00BCD29A /* XCRemoteSwiftPackageReference "swift-algorithms" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-algorithms.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.2.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -389,6 +401,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 3E3C982D2F13611D00508596 /* XCRemoteSwiftPackageReference "solana-swift" */;
 			productName = SolanaSwift;
+		};
+		5A02A6532F13C51F00BCD29A /* Algorithms */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5A02A6522F13C51F00BCD29A /* XCRemoteSwiftPackageReference "swift-algorithms" */;
+			productName = Algorithms;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

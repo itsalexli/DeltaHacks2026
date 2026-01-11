@@ -31,7 +31,7 @@ struct MyTasksView: View {
                         Text("My Tasks")
                             .font(.system(size: 14, weight: .medium, design: .rounded))
                             .foregroundColor(.white.opacity(0.7))
-                        Text("Active & Completed")
+                        Text("Active & Complete")
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                     }
@@ -84,6 +84,9 @@ struct MyTasksView: View {
                                     .onTapGesture { openTaskPopup(for: task) }
                             }
                         }
+                        
+                        // Spacer for Floating Button / Tab Bar
+                        Color.clear.frame(height: 80)
                     }
                     .padding(.horizontal, 25) // Match TaskScreen padding
                     .padding(.top, 10)
@@ -91,6 +94,10 @@ struct MyTasksView: View {
             }
             .blur(radius: selectedTask != nil ? 10 : 0)
             .disabled(selectedTask != nil)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, 15)
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+
             
             // Global Loading Overlay for Blockchain Actions (Payouts, etc.)
             if solanaService.isProcessing {
@@ -160,7 +167,7 @@ struct MyTasksView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding()
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
+                                    RoundedRectangle(cornerRadius: 15)
                                         .stroke(Color.red, lineWidth: 2)
                                 )
                         }
@@ -184,14 +191,17 @@ struct MyTasksView: View {
                             .foregroundColor(.black)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.green) // Solid green background for prominence
-                            .cornerRadius(10)
+                            .background(LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing))
+                            .cornerRadius(15)
+                            .shadow(color: .green.opacity(0.4), radius: 10, x: 0, y: 5)
                         }
                         .disabled(isVerifying)
                     }
                 }
                 .padding(25)
-                .background(RoundedRectangle(cornerRadius: 25).fill(.ultraThinMaterial))
+                .background(RoundedRectangle(cornerRadius: 30).fill(.ultraThinMaterial))
+                .overlay(RoundedRectangle(cornerRadius: 30).stroke(Color.white.opacity(0.2), lineWidth: 1))
+                .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 10)
                 .padding(.horizontal, 30)
                 .overlay(
                     // Loading Overlay Message
@@ -219,7 +229,6 @@ struct MyTasksView: View {
             loadUserBalance()
         })
         .onReceive(timer) { input in timeNow = input }
-        .padding(0)
         
         // MARK: - Camera Sheet
         .sheet(isPresented: $showCamera, onDismiss: processcapturedImage) {

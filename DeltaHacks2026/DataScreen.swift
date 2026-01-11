@@ -9,40 +9,42 @@ struct DataScreen: View {
     ]
     
     var body: some View {
-        VStack {
-            // Header
+        VStack(spacing: 0) {
+            // Header (Matching TaskScreen style)
             HStack {
+                VStack(alignment: .leading) {
+                    Text("Analytics")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.7))
+                    Text("Party Stats")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                
                 Spacer()
-                Text("Party Stats")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Spacer()
+                
+                // Placeholder for consistency (e.g., refresh or just spacer)
+                // for now just keeping the alignment clean
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 25)
             .padding(.top, 10)
+            .padding(.bottom, 20)
             
             ScrollView {
-                VStack(spacing: 25) {
+                VStack(spacing: 20) {
                     // Party Members Section
                     VStack(alignment: .leading, spacing: 15) {
-                        Text("Your Party")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal)
-                            .padding(.top, 10)
-                        
                         ForEach(partyMembers) { member in
                             PartyMemberCard(member: member)
                         }
                     }
-                    .padding(.top, 20)
+
                     
                     // Statistics Section
                     VStack(alignment: .leading, spacing: 15) {
                         Text("Overall Statistics")
                             .font(.headline)
                             .foregroundColor(.white)
-                            .padding(.horizontal)
                         
                         // Stats Grid
                         VStack(spacing: 15) {
@@ -70,14 +72,18 @@ struct DataScreen: View {
                                 StatCard(title: "Response Time", value: "2.3h", icon: "timer", color: .green)
                             }
                         }
-                        .padding(.horizontal)
                     }
                 }
-                .padding()
+                .padding(.horizontal, 25)
+                .padding(.top, 10)
+                
+                // Spacer for Floating Button / Tab Bar
+                Color.clear.frame(height: 80)
             }
-            Spacer()
         }
-        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 15)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 }
 
@@ -159,7 +165,7 @@ struct PartyMemberCard: View {
             
             Spacer()
         }
-        .padding(20)
+        .padding(15)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(.ultraThinMaterial)
@@ -176,7 +182,6 @@ struct PartyMemberCard: View {
                 )
         )
         .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-        .padding(.horizontal)
     }
 }
 
@@ -206,7 +211,7 @@ struct StatCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(18)
+        .padding(15)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16)

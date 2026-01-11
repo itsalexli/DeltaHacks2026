@@ -189,6 +189,7 @@ struct ContentView: View {
                     )
                     .foregroundColor(.black)
                     .cornerRadius(20)
+                    .shadow(color: .green.opacity(0.4), radius: 10, x: 0, y: 5)
                 }
                 .disabled(solanaService.isProcessing)
                 .padding(.horizontal, 35)

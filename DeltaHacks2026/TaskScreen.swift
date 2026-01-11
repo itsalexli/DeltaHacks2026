@@ -126,7 +126,7 @@ struct TaskScreen: View {
             .blur(radius: selectedTask != nil ? 10 : 0)
             .disabled(selectedTask != nil)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding()
+            .padding(.horizontal, 15)
             .ignoresSafeArea(.keyboard, edges: .bottom) // Fix: Prevent list resizing when keyboard opens
             
             // Global Loading Overlay for Blockchain Actions (Airdrop, etc.)
@@ -267,6 +267,7 @@ struct TaskScreen: View {
                                 .frame(maxWidth: .infinity)
                                 .background(LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing))
                                 .cornerRadius(15)
+                                .shadow(color: .green.opacity(0.4), radius: 10, x: 0, y: 5)
                         }
                     }
                 }
