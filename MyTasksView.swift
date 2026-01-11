@@ -2,6 +2,12 @@ import SwiftUI
 
 struct MyTasksView: View {
     @State private var myTasks: [TaskItem] = []
+    @State private var selectedTask: TaskItem? = nil
+    @State private var userBalance: Double = 1250.00
+    
+    // Timer for countdown
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    @State private var timeNow = Date()
     
     var body: some View {
         ZStack {
@@ -10,7 +16,7 @@ struct MyTasksView: View {
                 // Header
                 HStack {
                     Spacer()
-                    Text("My Tasks") // Updated Title
+                    Text("My Tasks")
                         .font(.headline)
                         .foregroundColor(.white)
                     Spacer()
@@ -26,9 +32,8 @@ struct MyTasksView: View {
                                 .padding(.top, 50)
                         } else {
                             ForEach(myTasks) { task in
-                                // Reusing TaskRow from TaskScreen.swift
-                                // Note: We do NOT add .onTapGesture here, making it non-clickable
-                                TaskRow(task: task)
+                                TaskRow(task: task, currentTime: timeNow)
+                                    .onTapGesture { openTaskPopup(for: task) }
                             }
                         }
                     }
@@ -36,8 +41,87 @@ struct MyTasksView: View {
                 }
                 Spacer()
             }
+            .blur(radius: selectedTask != nil ? 10 : 0)
+            .disabled(selectedTask != nil)
+            
+            // Task Action Popup
+            if let task = selectedTask {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture { closePopup() }
+                
+                VStack(spacing: 20) {
+                    // Header with title and X button
+                    HStack {
+                        Text(task.title)
+                            .font(.title2)
+                            .bold()
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        // Exit X Button
+                        Button(action: { closePopup() }) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.7))
+                                .padding(8)
+                                .background(Color.white.opacity(0.1))
+                                .clipShape(Circle())
+                        }
+                    }
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.5))
+                    
+                    // Task Value
+                    HStack {
+                        Text("Task Value: \(task.price)")
+                            .foregroundColor(.green)
+                            .bold()
+                        Spacer()
+                    }
+                    
+                    // Action Buttons
+                    HStack(spacing: 15) {
+                        // Discard Button
+                        Button(action: { discardTask(task) }) {
+                            Text("Discard")
+                                .font(.headline)
+                                .foregroundColor(.red)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.red, lineWidth: 2)
+                                )
+                        }
+                        
+                        // Completed Button
+                        Button(action: { completeTask(task) }) {
+                            Text("Completed")
+                                .font(.headline)
+                                .bold()
+                                .foregroundColor(.green)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.green, lineWidth: 2)
+                                )
+                        }
+                    }
+                }
+                .padding(25)
+                .background(RoundedRectangle(cornerRadius: 25).fill(.ultraThinMaterial))
+                .padding(.horizontal, 30)
+            }
         }
-        .onAppear(perform: loadMyTasks)
+        .onAppear(perform: {
+            loadMyTasks()
+            loadUserBalance()
+        })
+        .onReceive(timer) { input in timeNow = input }
         .padding()
     }
     
@@ -55,6 +139,69 @@ struct MyTasksView: View {
             if let encoded = try? JSONEncoder().encode(myTasks) {
                 UserDefaults.standard.set(encoded, forKey: "myTasks")
             }
+        }
+    }
+    
+    func loadUserBalance() {
+        userBalance = UserDefaults.standard.double(forKey: "userBalance")
+        if userBalance == 0 {
+            userBalance = 1250.00 // Default balance
+            UserDefaults.standard.set(userBalance, forKey: "userBalance")
+        }
+    }
+    
+    func openTaskPopup(for task: TaskItem) {
+        selectedTask = task
+    }
+    
+    func closePopup() {
+        withAnimation(.spring()) {
+            selectedTask = nil
+        }
+    }
+    
+    func discardTask(_ task: TaskItem) {
+        // Remove from myTasks
+        if let index = myTasks.firstIndex(where: { $0.id == task.id }) {
+            myTasks.remove(at: index)
+            saveMyTasks()
+        }
+        
+        // Add back to marketplace (savedTasks)
+        var marketplaceTasks: [TaskItem] = []
+        if let data = UserDefaults.standard.data(forKey: "savedTasks"),
+           let decoded = try? JSONDecoder().decode([TaskItem].self, from: data) {
+            marketplaceTasks = decoded
+        }
+        marketplaceTasks.append(task)
+        if let encoded = try? JSONEncoder().encode(marketplaceTasks) {
+            UserDefaults.standard.set(encoded, forKey: "savedTasks")
+        }
+        
+        closePopup()
+    }
+    
+    func completeTask(_ task: TaskItem) {
+        // Get task value
+        let priceString = task.price.replacingOccurrences(of: "$", with: "")
+        if let taskValue = Double(priceString) {
+            // Add to user balance
+            userBalance += taskValue
+            UserDefaults.standard.set(userBalance, forKey: "userBalance")
+        }
+        
+        // Remove from myTasks
+        if let index = myTasks.firstIndex(where: { $0.id == task.id }) {
+            myTasks.remove(at: index)
+            saveMyTasks()
+        }
+        
+        closePopup()
+    }
+    
+    func saveMyTasks() {
+        if let encoded = try? JSONEncoder().encode(myTasks) {
+            UserDefaults.standard.set(encoded, forKey: "myTasks")
         }
     }
 }

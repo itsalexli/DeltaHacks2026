@@ -197,7 +197,10 @@ struct TaskScreen: View {
                 .transition(.scale.combined(with: .opacity))
             }
         }
-        .onAppear(perform: loadTasks)
+        .onAppear(perform: {
+            loadTasks()
+            loadUserBalance()
+        })
         .onReceive(timer) { input in timeNow = input }
         .padding(0)
         .sheet(isPresented: $showAddTaskSheet) {
@@ -255,6 +258,14 @@ struct TaskScreen: View {
                 TaskItem(title: "Mow the lawn", price: "$45.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 1 + 1800)),
                 TaskItem(title: "Assemble IKEA Desk", price: "$60.00", biddingDate: Date(), dueDate: Date().addingTimeInterval(86400 * 5 + 7200))
             ]
+        }
+    }
+    
+    func loadUserBalance() {
+        userBalance = UserDefaults.standard.double(forKey: "userBalance")
+        if userBalance == 0 {
+            userBalance = 1250.00 // Default balance
+            UserDefaults.standard.set(userBalance, forKey: "userBalance")
         }
     }
 }
