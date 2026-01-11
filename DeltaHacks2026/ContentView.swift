@@ -43,8 +43,11 @@ struct ContentView: View {
                 .padding(.bottom, 35)
                 .background(.ultraThinMaterial)
                 .overlay(Rectangle().frame(height: 0.5).foregroundColor(.white.opacity(0.2)), alignment: .top)
+                
             }
             .ignoresSafeArea(edges: .bottom)
+            
+            
         }
         .onAppear(perform: loadPreviewTasks)
         // Refresh data when switching back to Home to see newly added tasks
@@ -79,7 +82,9 @@ struct ContentView: View {
                 }
             }
             .padding(.bottom, 60)
+            .padding()
         }
+        .padding()
     }
     
     func navButton(icon: String, label: String, index: Int) -> some View {
