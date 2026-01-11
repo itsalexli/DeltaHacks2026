@@ -87,7 +87,7 @@ struct ContentView: View {
             Text("Taski")
                 .foregroundColor(.white)
                 .font(.system(size: 50, weight: .bold, design: .rounded))
-                .padding(.top, 60)
+                .padding(.top, 0)
                 .frame(maxWidth: .infinity, alignment: .center)
             
             // MARK: - Balance Cards
@@ -155,11 +155,12 @@ struct ContentView: View {
                     }
                     
                     // Conversion Display
-                    if usdAmount > 0 {
-                        Text(String(format: "≈ %.4f SOL", solEquivalent))
-                            .font(.system(size: 12, weight: .medium, design: .rounded))
-                            .foregroundColor(.green.opacity(0.8))
-                    }
+                    // Conversion Display
+                    Text(usdAmount > 0 ? String(format: "≈ %.4f SOL", solEquivalent) : " ")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(.green.opacity(0.8))
+                        .opacity(usdAmount > 0 ? 1 : 0)
+                        .padding(.top, 5)
                 }
                 
                 // Deposit Button

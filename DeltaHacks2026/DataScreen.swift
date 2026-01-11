@@ -173,7 +173,7 @@ struct PartyMemberCard: View {
                     RoundedRectangle(cornerRadius: 20)
                         .stroke(
                             LinearGradient(
-                                colors: [Color.green.opacity(0.3), Color.clear],
+                                colors: [Color.white.opacity(0.3), Color.clear],
                                 startPoint: .leading,
                                 endPoint: .trailing
                             ),
@@ -218,7 +218,7 @@ struct StatCard: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(color.opacity(0.3), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
                 )
         )
         .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
